@@ -1,17 +1,36 @@
 import { createHmac } from "crypto";
 
+
+export const config = {
+  api: {
+    bodyParser: false
+  },
+}
+
+function getRawBody(readable:any){
+  const chunks = [];
+  for (const chunk of readable) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
+
 function handler(req: any, res: any) {
   console.log('req.body:',  req.body)
+  const signature = req.headers["x-xero-signature"];
+  console.log("signature:", signature)
   if (req.method !== "POST") {
     res.status(401).json({ success: false, message: "Method not supported"});
     return
   }
 
-  const signature = req.headers["x-xero-signature"];
+  const rawBody = getRawBody(req);
+  
   // const rawBody = await getRawBody(req);
-  const rawBody = JSON.stringify(req.body).split(':').join(': ')
-        .split(': [').join(':[')
-        .split(',"entropy"').join(', "entropy"')
+  // const rawBody = JSON.stringify(req.body).split(':').join(': ')
+  //       .split(': [').join(':[')
+  //       .split(',"entropy"').join(', "entropy"')
   const rawData = Buffer.from(rawBody).toString("utf8");
   req.body = JSON.parse(rawData);
 
